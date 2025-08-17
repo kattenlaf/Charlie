@@ -4,7 +4,7 @@ import google.genai
 import yaml
 from google import genai
 
-CONFIG_YAML_PATH = os.getcwd() + '\\config.yaml'
+CONFIG_YAML_PATH = os.getcwd() + '\\resources\\config.yaml'
 API_KEY = ''
 GEMINI_MODEL = 'gemini-2.5-flash'
 
