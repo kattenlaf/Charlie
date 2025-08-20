@@ -1,38 +1,49 @@
-import os.path
-import yaml
-from google import genai
+import os
+import gemini # my personal python, possibly rename
+from flask import Flask, request
 
-CONFIG_YAML_PATH = os.getcwd() + '\\resources\\config.yaml'
-API_KEY = ''
-GEMINI_MODEL = 'gemini-2.5-flash'
+from src.helpers import CONTENT_TYPES
 
-# Setup
-def get_config_yaml():
-    try:
-        with open(CONFIG_YAML_PATH, 'r') as file:
-            yaml_data = yaml.full_load(file)
-            return yaml_data
-    except Exception as exc:
-        print(f'Unhandled Exception obtaining yaml file {exc}')
+UPLOAD_FOLDER = os.getcwd() + '\\assets\\uploaded'
+print(os.getcwd())
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
-API_KEY = str(get_config_yaml().get('apikey')['value'])
+@app.route("/")
+def hello_world():
+    return "<p>Hello, World!</p>"
 
-def setup() -> genai.Client:
-    # https://ai.google.dev/gemini-api/docs/quickstart#python_1
-    os.environ['GEMINI_API_KEY'] = API_KEY
-    gemini_client = genai.Client()
-    return gemini_client
+# TODO google search - making a POST request with an image in flutter
+@app.route('/upload_image', methods=['POST', 'PUT'])
+def upload_image():
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        return 'no file object'
+    file = request.files['file']
+    if file.filename == '':
+        return 'No selected file'
+    if file:
+        filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        file.save(filename)
+        return f'Image uploaded successfully: {file.filename}'
 
-def execute(gemini_client: genai.Client):
-    print('Gemini client is loaded and waiting:')
-    response = prompt_gemini_and_get_response(gemini_client, 'who is batman?')
-    print(response)
+def set_image_details_from_gemini(image_filepath_name):
+    with open(image_filepath_name, 'rb') as f:
+        image_bytes = f.read()
+    # TODO make the call to gemini api here
+    response = gemini.prompt_gemini_and_get_response(gemini_client, 'What is this image?', image_bytes, CONTENT_TYPES.IMAGE)
     print(response.text)
+    # TODO Continue from here
+    return response.text
 
-def prompt_gemini_and_get_response(gemini_client: genai.Client, prompt: str) -> genai.types.GenerateContentResponse:
-    response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-    return response
+
+@app.route("/images/<image_id>", methods=['GET'])
+def get_image_details(image_id):
+    if request.method != 'GET':
+        return 'incorrect http method'
+    # TODO sql command to retrieve image data
 
 if __name__ == '__main__':
-    gemini_client = setup()
-    execute(gemini_client)
+    gemini_client = gemini.setup()
+    gemini.execute(gemini_client)
