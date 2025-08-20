@@ -1,6 +1,4 @@
 import os.path
-
-import google.genai
 import yaml
 from google import genai
 
