@@ -2,6 +2,7 @@ import os
 import gemini # my personal python, possibly rename
 from flask import Flask, request
 
+import src.helpers
 from src.helpers import CONTENT_TYPES
 
 UPLOAD_FOLDER = os.getcwd() + '\\assets\\uploaded'
@@ -31,8 +32,7 @@ def upload_image():
 def set_image_details_from_gemini(image_filepath_name):
     with open(image_filepath_name, 'rb') as f:
         image_bytes = f.read()
-    # TODO make the call to gemini api here
-    response = gemini.prompt_gemini_and_get_response(gemini_client, 'What is this image?', image_bytes, CONTENT_TYPES.IMAGE)
+    response = gemini.prompt_gemini_and_get_response(gemini_client, src.helpers.Gemini_Messages.WHAT_IS_IMG, image_bytes, CONTENT_TYPES.IMAGE)
     print(response.text)
     # TODO Continue from here
     return response.text
