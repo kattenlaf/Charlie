@@ -1,0 +1,8 @@
+Quality of life stuff
+https://www.reddit.com/r/reactnative/comments/1gk4kgb/how_do_you_structure_your_react_native_projects/ - Structuring project
+
+Stuff to learn for react native development
+https://reactnavigation.org/docs/4.x/stack-navigator/
+https://docs.expo.dev/versions/latest/sdk/camera/
+https://docs.expo.dev/config-plugins/introduction/
+https://github.com/expo/examples/blob/master/with-camera/App.tsx
