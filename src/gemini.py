@@ -1,10 +1,9 @@
 import os.path
-
-import google.genai
 import yaml
+from helpers import CONTENT_TYPES
 from google import genai
 
-CONFIG_YAML_PATH = os.getcwd() + '\\config.yaml'
+CONFIG_YAML_PATH = os.getcwd() + '\\resources\\config.yaml'
 API_KEY = ''
 GEMINI_MODEL = 'gemini-2.5-flash'
 
@@ -31,10 +30,21 @@ def execute(gemini_client: genai.Client):
     print(response)
     print(response.text)
 
-def prompt_gemini_and_get_response(gemini_client: genai.Client, prompt: str) -> genai.types.GenerateContentResponse:
-    response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+# https://ai.google.dev/gemini-api/docs/image-understanding
+def prompt_gemini_and_get_response(gemini_client: genai.Client, prompt: str, data, content_type: CONTENT_TYPES) -> genai.types.GenerateContentResponse:
+    response = None
+    contents = None
+    model = GEMINI_MODEL
+    if content_type == CONTENT_TYPES.TEXT:
+        contents = prompt
+    # in this case data would be image bytes
+    if content_type == CONTENT_TYPES.IMAGE:
+        contents = [
+            genai.types.Part.from_bytes(
+                data=data,
+                mime_type='image/jpeg'
+            ),
+            prompt
+        ]
+    response = gemini_client.models.generate_content(model=model, contents=contents)
     return response
-
-if __name__ == '__main__':
-    gemini_client = setup()
-    execute(gemini_client)
