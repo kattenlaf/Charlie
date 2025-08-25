@@ -18,6 +18,12 @@ const styles = StyleSheet.create({
     alignContent: "center",
     alignItems: "center",
   },
+  backButton: {
+    padding: 5,
+    borderRadius: 10,
+    alignContent: "center",
+    alignItems: "center",
+  },
   buttonText: {
     color: "#fff",
     fontSize: 16,

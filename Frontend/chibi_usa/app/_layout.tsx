@@ -1,13 +1,12 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import Home from "./index";
-import SendImageScreen from "./src/screens/send_image_screen";
+import LandingStack from "./src/screens/_layout";
 
-const Stack = createStackNavigator();
-
+const IndexStack = createStackNavigator();
 
 export default function AppNavigator() {
   return (
-    <Stack.Navigator screenOptions={{
+    <IndexStack.Navigator screenOptions={{
         headerStyle: {
           backgroundColor: '#f4511e',
         },
@@ -16,8 +15,8 @@ export default function AppNavigator() {
           fontWeight: 'bold',
         },
       }}>
-        <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
-        <Stack.Screen name="SendImageScreen" component={SendImageScreen} options={{ title: 'Send Image' }} />
-    </Stack.Navigator>
+        <IndexStack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+        <IndexStack.Screen name="LandingStack" component={LandingStack} options={{ headerShown: false }} />
+    </IndexStack.Navigator>
   );
 }

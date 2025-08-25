@@ -1,15 +1,20 @@
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import styles from "./src/utils/styles";
 
+type RootStackParamList = {
+  LandingStack: { screen: string };
+  // add other routes here if needed
+};
 
 const Home = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const SendImageScreenButton = () => {
   return(
-    <Pressable style={styles.button} onPress={() => navigation.navigate('SendImageScreen' as never)}>
+    <Pressable style={styles.button} onPress={() => navigation.navigate('LandingStack', {screen: 'LandingScreen'})}>
       <Text style={styles.buttonText}>Go to Send Image Screen</Text>
     </Pressable>
     );
