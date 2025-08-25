@@ -1,9 +1,12 @@
-import { Stack } from "expo-router";
+import { createStackNavigator } from '@react-navigation/stack';
+import Home from "./index";
+import LandingStack from "./src/screens/_layout";
 
-export default function RootLayout() {
+const IndexStack = createStackNavigator();
+
+export default function AppNavigator() {
   return (
-    <Stack
-      screenOptions={{
+    <IndexStack.Navigator screenOptions={{
         headerStyle: {
           backgroundColor: '#f4511e',
         },
@@ -11,10 +14,9 @@ export default function RootLayout() {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-      }}
-    >
-      <Stack.Screen name="index" options={{ title: 'Home' }} />
-      <Stack.Screen name="send_image_screen" options={{ title: 'Send Image' }} />
-    </Stack>
+      }}>
+        <IndexStack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+        <IndexStack.Screen name="LandingStack" component={LandingStack} options={{ headerShown: false }} />
+    </IndexStack.Navigator>
   );
 }
