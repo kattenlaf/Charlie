@@ -5,7 +5,8 @@ import { CameraMode, CameraType, CameraView, useCameraPermissions } from 'expo-c
 import { Image } from 'expo-image';
 import { useNavigation } from "expo-router";
 import { useRef, useState } from "react";
-import { Button, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import * as AppConstants from '../utils/constants/constants';
 
 // Taken from https://github.com/expo/examples/blob/master/with-camera/App.tsx
 export default function TakePictureScreen() {
@@ -28,15 +29,52 @@ export default function TakePictureScreen() {
           <Text style={{ textAlign: "center" }}>
             We need your permission to show the camera
           </Text>
-          <Button onPress={requestPermission} title="grant permission" />
+          <Pressable style={take_picture_screen_styles.permissionBtn} onPress={requestPermission}>
+            <Text style={{ color: "white" }}>Grant permission</Text>
+          </Pressable>
         </View>
       );
     }
 
     const takePicture = async () => {
-    const photo = await ref.current?.takePictureAsync();
+    const photo = await ref.current?.takePictureAsync({shutterSound: false});
     setUri(photo?.uri ?? null);
+    // TODO: Implement another button to send the picture to server, then start working on the backend again
+    if (photo) {
+      await sendPictureToServer(photo);
+    }
+    console.log({ photo });
     };
+
+    const sendPictureToServer = async (photo: any) => {
+      const formData = new FormData();
+      formData.append('product_image', photo, photo.uri);
+      const headers = {
+        Accept: 'application/json'
+      };
+      try {
+        // TODO: Fix api request to the backend
+        const response = await fetch(AppConstants.SERVER_URL + '/upload_image', 
+          {
+          method: 'POST',
+          headers,
+          body: formData
+          }
+        )
+        if (response.ok) {
+          const data = response.json();
+          console.log('uploading image was successful', data);
+          // TODO: Probably respond with item details and then request confirmation from user, then prompt backend again for the next details
+        } else {
+          console.error('uploading image failed');
+          // TODO: Attempt reupload?
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        // Handle error gracefully, potentially retrying based on error type
+      }
+    }
+
 
     const recordVideo = async () => {
         if (recording) {
@@ -65,7 +103,9 @@ export default function TakePictureScreen() {
             contentFit="contain"
             style={{ width: 300, aspectRatio: 1 }}
             />
-            <Button onPress={() => setUri(null)} title="Take another picture" />
+            <Pressable style={take_picture_screen_styles.permissionBtn} onPress={() => setUri(null)}>
+              <Text style={{ color: "white" }}>Take another Picture</Text>
+            </Pressable>
         </View>
         );
     };
@@ -161,4 +201,11 @@ const take_picture_screen_styles = StyleSheet.create({
     height: 70,
     borderRadius: 50,
   },
+  permissionBtn: {
+    alignItems: "center",
+    padding: 8,
+    backgroundColor: "blue",
+    borderRadius: 5,
+    marginTop: 35,
+  }
 });
