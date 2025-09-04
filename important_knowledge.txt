@@ -1,3 +1,5 @@
 https://stackoverflow.com/questions/16877968/call-a-server-side-method-on-a-resource-in-a-restful-way
 
 https://flask.palletsprojects.com/en/stable/patterns/fileuploads/
+
+https://www.pricecharting.com/api-documentation

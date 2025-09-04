@@ -2,6 +2,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { CameraMode, CameraType, CameraView, useCameraPermissions } from 'expo-camera';
+import * as FileSystem from 'expo-file-system';
 import { Image } from 'expo-image';
 import { useNavigation } from "expo-router";
 import { useRef, useState } from "react";
@@ -38,22 +39,32 @@ export default function TakePictureScreen() {
 
     const takePicture = async () => {
     const photo = await ref.current?.takePictureAsync({shutterSound: false});
-    setUri(photo?.uri ?? null);
-    // TODO: Implement another button to send the picture to server, then start working on the backend again
-    if (photo) {
-      await sendPictureToServer(photo);
+    const fileInfo = await FileSystem.getInfoAsync(photo?.uri ?? "");
+    if (fileInfo.exists && 'size' in fileInfo) {
+      console.log('File size:', (fileInfo as FileSystem.FileInfo).size);
+    } else {
+      console.log('File does not exist or size is unavailable');
     }
+    setUri(photo?.uri ?? null);
     console.log({ photo });
     };
 
-    const sendPictureToServer = async (photo: any) => {
+    const sendPictureToServer = async (imageUri: string) => {
+      if (imageUri == null) {
+        // TODO: Handle this error properly
+        console.error('No image URI provided');
+        return;
+      }
       const formData = new FormData();
-      formData.append('product_image', photo, photo.uri);
+      formData.append('image', {
+        uri: imageUri,
+        type: 'image/jpeg',
+      } as any, 'photo.jpg');
       const headers = {
         Accept: 'application/json'
       };
+      
       try {
-        // TODO: Fix api request to the backend
         const response = await fetch(AppConstants.SERVER_URL + '/upload_image', 
           {
           method: 'POST',
@@ -66,7 +77,8 @@ export default function TakePictureScreen() {
           console.log('uploading image was successful', data);
           // TODO: Probably respond with item details and then request confirmation from user, then prompt backend again for the next details
         } else {
-          console.error('uploading image failed');
+          const errorText = await response.text();
+          console.error('uploading image failed', errorText);
           // TODO: Attempt reupload?
         }
       } catch (error) {
@@ -103,8 +115,12 @@ export default function TakePictureScreen() {
             contentFit="contain"
             style={{ width: 300, aspectRatio: 1 }}
             />
-            <Pressable style={take_picture_screen_styles.permissionBtn} onPress={() => setUri(null)}>
+            <Pressable style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.takeAnotherPictureBtn]} onPress={() => setUri(null)}>
               <Text style={{ color: "white" }}>Take another Picture</Text>
+            </Pressable>
+            <Pressable
+              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.uploadPictureBtn]} onPress={() => { if (uri) sendPictureToServer(uri); }}>
+              <Text style={{ color: "white" }}>Upload Picture</Text>
             </Pressable>
         </View>
         );
@@ -207,5 +223,11 @@ const take_picture_screen_styles = StyleSheet.create({
     backgroundColor: "blue",
     borderRadius: 5,
     marginTop: 35,
+  },
+  takeAnotherPictureBtn: {
+    backgroundColor: "green",
+  },
+  uploadPictureBtn: {
+    backgroundColor: "orange",
   }
 });
