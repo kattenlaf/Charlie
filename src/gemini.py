@@ -3,18 +3,20 @@ import yaml
 from helpers import CONTENT_TYPES
 from google import genai
 
-CONFIG_YAML_PATH = os.getcwd() + '\\resources\\config.yaml'
-API_KEY = ''
+PARENT_DIRECTORY = os.getcwd()
+CONFIG_YAML_PATH = PARENT_DIRECTORY + '\\resources\\config.yaml'
 GEMINI_MODEL = 'gemini-2.5-flash'
 
 # Setup
 def get_config_yaml():
+    print(CONFIG_YAML_PATH)
     try:
         with open(CONFIG_YAML_PATH, 'r') as file:
             yaml_data = yaml.full_load(file)
             return yaml_data
     except Exception as exc:
         print(f'Unhandled Exception obtaining yaml file {exc}')
+        raise
 
 API_KEY = str(get_config_yaml().get('apikey')['value'])
 
