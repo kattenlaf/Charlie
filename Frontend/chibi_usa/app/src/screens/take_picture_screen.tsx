@@ -6,7 +6,7 @@ import * as FileSystem from 'expo-file-system';
 import { Image } from 'expo-image';
 import { useNavigation } from "expo-router";
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import * as AppConstants from '../utils/constants/constants';
 
 // Taken from https://github.com/expo/examples/blob/master/with-camera/App.tsx
@@ -19,6 +19,24 @@ export default function TakePictureScreen() {
     const [mode, setMode] = useState<CameraMode>("picture");
     const [facing, setFacing] = useState<CameraType>("back");
     const [recording, setRecording] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [textData, setTextData] = useState({ name: '', description: '' });
+
+    const openModal = () => {
+      setModalVisible(true);
+    }
+
+    const closeModal = () => {
+      setModalVisible(false);
+    }
+
+    const handleInputChange = (e: any) => {
+      const {name, value} = e.target;
+      setTextData((prevState) => ({
+        ...prevState,
+        [name]: value
+      }));
+    }
 
     if (!permission) {
       return null;
@@ -84,7 +102,7 @@ export default function TakePictureScreen() {
         } else {
           const errorText = await response.text();
           console.error('uploading image failed', errorText);
-          // TODO: Attempt reupload? not sure how to render that
+          // TODO: Attempt reupload? not sure how to render that nicely
         }
       } catch (error) {
         console.error('Error uploading image:', error);
@@ -124,9 +142,9 @@ export default function TakePictureScreen() {
               <Text style={{ color: "white" }}>Take another Picture</Text>
             </Pressable>
             <Pressable
-              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.uploadPictureBtn]} onPress={() => { if (uri) sendPictureToServer(uri); }}>
-              <Text style={{ color: "white" }}>Upload Picture</Text>
-            </Pressable>
+              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.uploadPictureBtn]} onPress={() => { openModal(); }}>
+              <Text style={{ color: "white" }}>Add photo details</Text>
+          </Pressable>
         </View>
         );
     };
@@ -178,10 +196,48 @@ export default function TakePictureScreen() {
         );
     };
 
+    const renderModal = () => {
+      return (
+        <Modal animationType="slide" transparent={false} visible={modalVisible} onRequestClose={closeModal}>
+        <View style={take_picture_screen_styles.modalContainer}>
+          <View style={take_picture_screen_styles.modalContent}>
+            <Image
+            source={uri ? { uri } : undefined}
+            contentFit="contain"
+            style={{ width: 300, aspectRatio: 1 }}
+            />
+            <TouchableOpacity style={take_picture_screen_styles.permissionBtn} onPress={closeModal}>
+              <Text style={{ color: "white" }}>Go Back</Text>
+            </TouchableOpacity>
+            {renderInputWindow()}
+            <Pressable
+              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.uploadPictureBtn]} onPress={() => { if (uri) sendPictureToServer(uri); }}>
+              <Text style={{ color: "white" }}>Process image on server</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      )
+    };
+
+    const renderInputWindow = () => {
+      // adjust place holder text, format this properly for the modal
+      return (
+        <View>
+          <Text style={{ color: "black" }}>Go Back</Text>
+          <TextInput 
+          value={textData.description}
+          placeholder={textData.name} 
+          onChangeText={value => setTextData(prev => ({ ...prev, description: value }))}
+          />
+        </View>
+      )
+    };
 
     return (
         <View style={take_picture_screen_styles.container}>
-        {uri ? renderPicture() : renderCamera()}
+          {renderModal()}
+          {uri ? renderPicture() : renderCamera()}
         </View>
     );
 }
@@ -234,5 +290,20 @@ const take_picture_screen_styles = StyleSheet.create({
   },
   uploadPictureBtn: {
     backgroundColor: "orange",
-  }
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  modalContent: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+  },
 });
