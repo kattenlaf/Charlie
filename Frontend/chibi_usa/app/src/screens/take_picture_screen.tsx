@@ -41,7 +41,7 @@ export default function TakePictureScreen() {
     const photo = await ref.current?.takePictureAsync({shutterSound: false});
     const fileInfo = await FileSystem.getInfoAsync(photo?.uri ?? "");
     if (fileInfo.exists && 'size' in fileInfo) {
-      console.log('File size:', (fileInfo as FileSystem.FileInfo).size);
+      console.log('File size:', (fileInfo as any).size);
     } else {
       console.log('File does not exist or size is unavailable');
     }
@@ -55,17 +55,22 @@ export default function TakePictureScreen() {
         console.error('No image URI provided');
         return;
       }
+      console.log('Preparing to upload image:', imageUri);
       const formData = new FormData();
       formData.append('image', {
         uri: imageUri,
+        name: 'image.jpg',
         type: 'image/jpeg',
       } as any, 'photo.jpg');
       const headers = {
-        Accept: 'application/json'
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
       };
       
       try {
-        const response = await fetch(AppConstants.SERVER_URL + '/upload_image', 
+        let route = '/upload_image';
+        let upload_image_url = AppConstants.SCHEMA + AppConstants.HOST + ':' + AppConstants.PORT + route;
+        const response = await fetch(upload_image_url, 
           {
           method: 'POST',
           headers,
@@ -79,7 +84,7 @@ export default function TakePictureScreen() {
         } else {
           const errorText = await response.text();
           console.error('uploading image failed', errorText);
-          // TODO: Attempt reupload?
+          // TODO: Attempt reupload? not sure how to render that
         }
       } catch (error) {
         console.error('Error uploading image:', error);
