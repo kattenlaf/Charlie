@@ -55,6 +55,11 @@ def upload_image():
     if file.filename == '':
         return 'No selected file', 400
     if file:
+        # TODO parse image_data sent over from client here
+        if request.form:
+            if helpers.SERVER_MESSAGES_CONSTANTS.JSON_IMAGE_DATA in request.form:
+                image_data_details = helpers.parse_image_data_request(request.form.get(helpers.SERVER_MESSAGES_CONSTANTS.JSON_IMAGE_DATA))
+                print(image_data_details)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         # TODO introduce database to be able to find images with a given image id?
         if os.path.isfile(filepath):

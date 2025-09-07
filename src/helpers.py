@@ -16,6 +16,9 @@ class CONTENT_TYPES(IntEnum):
     IMAGE = 0
     TEXT = 1
 
+class SERVER_MESSAGES_CONSTANTS:
+    JSON_IMAGE_DATA = 'image_data'
+
 class SERVER_ROUTES:
     UPLOAD_IMAGE = '/upload_image'
 
@@ -35,6 +38,17 @@ def handle_successful_http(server_route: str, content_properties=None):
 
     return json.dumps(response_json), 202
 
+# TODO item name and price listed will be treated as is, other details maybe can do some type of semantic analysis on ithe comments provided
+IMAGE_DETAILS_KEYS = (['item_name', 'price_listed', 'other_details'])
+def parse_image_data_request(json_string):
+    request_body_json = json.loads(json_string)
+    dict_of_details = defaultdict(lambda: "")
+    for key in IMAGE_DETAILS_KEYS:
+        dict_of_details[key] = request_body_json[key]
+    return dict_of_details
+
+
+# TODO set up proper error handling, codes and messages
 ERROR_MSG = {
     "Invalid image sent"
 }
