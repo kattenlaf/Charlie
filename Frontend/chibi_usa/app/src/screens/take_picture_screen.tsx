@@ -20,7 +20,11 @@ export default function TakePictureScreen() {
     const [facing, setFacing] = useState<CameraType>("back");
     const [recording, setRecording] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
-    const [textData, setTextData] = useState({ name: '', description: '' });
+    const [textData, setTextData] = useState({ 
+      item_name: '',
+      price_listed: '',
+      other_details: ''
+     });
 
     const openModal = () => {
       setModalVisible(true);
@@ -32,6 +36,7 @@ export default function TakePictureScreen() {
 
     const handleInputChange = (e: any) => {
       const {name, value} = e.target;
+      console.log(`Input changed: ${name} = ${value}`);
       setTextData((prevState) => ({
         ...prevState,
         [name]: value
@@ -80,6 +85,13 @@ export default function TakePictureScreen() {
         name: 'image.jpg',
         type: 'image/jpeg',
       } as any, 'photo.jpg');
+      // Add user given image details to the form data
+      const image_data = {
+        'item_name': textData.item_name,
+        'price_listed': textData.price_listed,
+        'other_details': textData.other_details
+      }
+      formData.append('image_data', JSON.stringify(image_data));
       const headers = {
         'Content-Type': 'multipart/form-data',
         'Accept': 'application/json'
@@ -142,7 +154,7 @@ export default function TakePictureScreen() {
               <Text style={{ color: "white" }}>Take another Picture</Text>
             </Pressable>
             <Pressable
-              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.uploadPictureBtn]} onPress={() => { openModal(); }}>
+              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.modalProcessImageBtn]} onPress={() => { openModal(); }}>
               <Text style={{ color: "white" }}>Add photo details</Text>
           </Pressable>
         </View>
@@ -199,36 +211,47 @@ export default function TakePictureScreen() {
     const renderModal = () => {
       return (
         <Modal animationType="slide" transparent={false} visible={modalVisible} onRequestClose={closeModal}>
-        <View style={take_picture_screen_styles.modalContainer}>
-          <View style={take_picture_screen_styles.modalContent}>
-            <Image
-            source={uri ? { uri } : undefined}
-            contentFit="contain"
-            style={{ width: 300, aspectRatio: 1 }}
-            />
-            <TouchableOpacity style={take_picture_screen_styles.permissionBtn} onPress={closeModal}>
-              <Text style={{ color: "white" }}>Go Back</Text>
-            </TouchableOpacity>
-            {renderInputWindow()}
-            <Pressable
-              style={[take_picture_screen_styles.permissionBtn, take_picture_screen_styles.uploadPictureBtn]} onPress={() => { if (uri) sendPictureToServer(uri); }}>
-              <Text style={{ color: "white" }}>Process image on server</Text>
-            </Pressable>
+          <View style= {take_picture_screen_styles.modelBackground}>
+            <View style={take_picture_screen_styles.modalContainer}>
+              <View style={take_picture_screen_styles.modalContent}>
+                <TouchableOpacity style={take_picture_screen_styles.modalBtnTopLeft} onPress={closeModal}>
+                  <AntDesign name="close" size={24} color="white" />
+                </TouchableOpacity>
+                {renderInputWindow()}
+                <View style={take_picture_screen_styles.modalProcessImageViewArea}>
+                  <Pressable
+                  style={take_picture_screen_styles.modalProcessImageBtn} onPress={() => { if (uri) sendPictureToServer(uri); }}>
+                  <Text style={{ color: "white" }}>Process image on server</Text>
+                </Pressable>
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
       )
     };
 
     const renderInputWindow = () => {
-      // adjust place holder text, format this properly for the modal
+      // FIXME: also the text inputs are not properly centered, or expand around the center properly
       return (
-        <View>
-          <Text style={{ color: "black" }}>Go Back</Text>
-          <TextInput 
-          value={textData.description}
-          placeholder={textData.name} 
-          onChangeText={value => setTextData(prev => ({ ...prev, description: value }))}
+        <View style={take_picture_screen_styles.modalTextViewArea}>
+          <TextInput
+          style={take_picture_screen_styles.modalTextInput}
+          value={textData.item_name}
+          placeholder={"name"} 
+          onChangeText={data => handleInputChange({target: {name: 'item_name', value: data}})}
+          />
+          <TextInput
+          style={take_picture_screen_styles.modalTextInput}
+          value={textData.price_listed}
+          placeholder={"price listed"} 
+          onChangeText={data => handleInputChange({target: {name: 'price_listed', value: data}})}
+          />
+          <TextInput
+          style={take_picture_screen_styles.modalTextInput}
+          value={textData.other_details}
+          placeholder={"other-details"} 
+          onChangeText={data => handleInputChange({target: {name: 'other_details', value: data}})}
           />
         </View>
       )
@@ -288,16 +311,16 @@ const take_picture_screen_styles = StyleSheet.create({
   takeAnotherPictureBtn: {
     backgroundColor: "green",
   },
-  uploadPictureBtn: {
-    backgroundColor: "orange",
+  modelBackground: {
+    flex: 1,
+    backgroundColor: "rgba(197, 193, 193, 0.5)",
   },
   modalContainer: {
     flex: 1,
-    justifyContent: "center",
   },
   modalContent: {
+    flex:1, 
     margin: 20,
-    backgroundColor: "white",
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
@@ -305,5 +328,38 @@ const take_picture_screen_styles = StyleSheet.create({
   modalText: {
     marginBottom: 15,
     textAlign: "center",
+  },
+  modalHeaderText: {
+    fontWeight: "bold",
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  modalBtnTopLeft: {
+    position: "absolute",
+    top: 1,
+    right: 1,
+    padding: 10,
+    backgroundColor: "blue",
+    borderRadius: 10,
+  },
+  modalTextViewArea: {
+    marginTop: 45,
+  },
+  modalTextInput: {
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 100,
+    marginBottom: 10,
+  },
+  modalProcessImageViewArea: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalProcessImageBtn: {
+    backgroundColor: "orange",
+    padding: 10,
+    borderRadius: 10,
   },
 });
