@@ -1,7 +1,7 @@
 import os
 import gemini # my personal python file, possibly rename
 import socket
-import asyncio
+import threading
 from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 
@@ -38,41 +38,59 @@ def favicon():
 def hello_world():
     return "<p>Hello, World!</p>"
 
-# TODO google search - making a POST request with an image in react native
-@app.route('/upload_image', methods=['POST', 'PUT'])
+# Handles the uploading of the image and also kicks off the processing and storing in database
+@app.route('/upload_image', methods=['POST'])
 def upload_image():
-    print(request.files)
-    # check if the post request has the file part
+    image = None
+    # TODO send response back as some json, build that setup in helpers
     if 'image' not in request.files:
         print('no image')
-        return 'No file object sent', 400
-    print('image found')
+        return 'No image object sent', 400
     try:
-        file = request.files.get('image')
+        image = request.files.get('image')
     except Exception as e:
         print(f'Internal server exception loading image: {e}')
         return 'error loading received file on server', 500
-    if file.filename == '':
-        return 'No selected file', 400
-    if file:
+    if image.filename == '':
+        return 'No selected image', 400
+    if not image:
+        return 'image file does not exist', 400
         # TODO parse image_data sent over from client here
-        if request.form:
-            if helpers.SERVER_MESSAGES_CONSTANTS.JSON_IMAGE_DATA in request.form:
-                image_data_details = helpers.parse_image_data_request(request.form.get(helpers.SERVER_MESSAGES_CONSTANTS.JSON_IMAGE_DATA))
-                print(image_data_details)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        # TODO introduce database to be able to find images with a given image id?
-        if os.path.isfile(filepath):
-            filepath = helpers.update_filepath_for_saving(filepath)
-        file.save(filepath)
-        # TODO after this file is saved put in some message queue or just queue to be picked up and processed by gemini
-        # TODO or just send back the resutls?
+    # Obtain image details from request if present
+    image_data_details = None
+    if request.form:
+        if helpers.SERVER_CONSTANTS.JSON_IMAGE_DATA in request.form:
+            image_data_details = helpers.parse_image_data_request(request.form.get(helpers.SERVER_CONSTANTS.JSON_IMAGE_DATA))
+    filepath = None
+    for i in range(helpers.SERVER_CONSTANTS.SAVING_IMAGE_RETRIES):
         try:
-            print(fetch_image_details_from_gemini(filepath))
-        except Exception as e:
-            print(f'Exception occurred requesting image status from gemini: {e}')
-            return helpers.handle_unsuccessful_http(SERVER_ROUTES.UPLOAD_IMAGE)
-        return helpers.handle_successful_http(SERVER_ROUTES.UPLOAD_IMAGE)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+            if os.path.isfile(filepath):
+                filepath = helpers.update_filepath_for_saving(filepath)
+            image.save(filepath)
+        except Exception as exc:
+            print(f'Exception occurred trying to save image received with exception {exc}')
+            if i >= helpers.SERVER_CONSTANTS.SAVING_IMAGE_RETRIES:
+                return 'error saving file on server', 500
+    t = threading.Thread(target=process_image, args=(filepath, image_data_details))
+    return helpers.handle_successful_http(SERVER_ROUTES.UPLOAD_IMAGE)
+
+def process_image(image_filepath, image_data_details=None):
+    if image_filepath:
+        if image_data_details:
+            # TODO check price charting with the details already sent to minimize AI consumption
+            print(image_data_details)
+
+        # handle saving the image for potential upload and other required processing
+        # handle retry saving the image as well
+        try:
+            # TODO query gemini, pricecharting
+            gemini_results = fetch_image_details_from_gemini(image_filepath)
+        except Exception as exc:
+            print(f'Failure querying gemini with exception {exc}\n, will retry later')
+
+
+
 
 def fetch_image_details_from_gemini(image_filepath_name):
     with open(image_filepath_name, 'rb') as f:
