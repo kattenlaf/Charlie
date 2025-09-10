@@ -1,9 +1,12 @@
 import json
 import os
 import secrets
+from pricecharting import IMAGE_DETAILS
 from enum import IntEnum
 from collections import defaultdict
 from datetime import datetime
+from typing import Any
+
 
 # Gemini questions
 class Gemini_Messages:
@@ -36,15 +39,13 @@ def handle_successful_http(server_route: str, content_properties=None):
             for key, value in content_properties.items():
                 response_json[key] = value
         response_code = 202
+    return json.dumps(response_json), response_code
 
-    return json.dumps(response_json), 202
-
-# TODO item name and price listed will be treated as is, other details maybe can do some type of semantic analysis on ithe comments provided
-IMAGE_DETAILS_KEYS = (['item_name', 'price_listed', 'other_details'])
-def parse_image_data_request(json_string):
+IMAGE_DETAILS_KEYS = [IMAGE_DETAILS.ITEM_NAME, IMAGE_DETAILS.PRICE_LISTED, IMAGE_DETAILS.OTHER_DETAILS]
+def parse_image_data_request(json_string: str) -> defaultdict[Any, None] | None:
     try:
         request_body_json = json.loads(json_string)
-        dict_of_details = defaultdict(lambda: "")
+        dict_of_details = defaultdict(lambda: None)
         for key in IMAGE_DETAILS_KEYS:
             dict_of_details[key] = request_body_json[key]
         return dict_of_details

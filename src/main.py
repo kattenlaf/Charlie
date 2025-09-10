@@ -1,4 +1,6 @@
 import os
+from collections import defaultdict
+
 import gemini # my personal python file, possibly rename
 import socket
 import threading
@@ -8,6 +10,8 @@ from flask_cors import CORS
 import helpers
 from helpers import CONTENT_TYPES
 from src.helpers import SERVER_ROUTES
+
+import pricecharting
 
 UPLOAD_FOLDER = os.getcwd() + '\\assets\\uploaded\\images'
 print(os.getcwd())
@@ -44,17 +48,16 @@ def upload_image():
     image = None
     # TODO send response back as some json, build that setup in helpers
     if 'image' not in request.files:
-        print('no image')
         return 'No image object sent', 400
     try:
         image = request.files.get('image')
     except Exception as e:
         print(f'Internal server exception loading image: {e}')
         return 'error loading received file on server', 500
-    if image.filename == '':
-        return 'No selected image', 400
     if not image:
         return 'image file does not exist', 400
+    if image.filename == '':
+        return 'No selected image', 400
         # TODO parse image_data sent over from client here
     # Obtain image details from request if present
     image_data_details = None
@@ -75,24 +78,30 @@ def upload_image():
     t = threading.Thread(target=process_image, args=(filepath, image_data_details))
     return helpers.handle_successful_http(SERVER_ROUTES.UPLOAD_IMAGE)
 
-def process_image(image_filepath, image_data_details=None):
-    if image_filepath:
-        if image_data_details:
-            # TODO check price charting with the details already sent to minimize AI consumption
-            print(image_data_details)
+def process_image(image_filepath, image_data_details: defaultdict[None]):
+    should_query_gemini = False
+    if image_data_details:
+        pricecharting_product = pricecharting.check_product_exists(image_data_details)
+        if pricecharting_product:
+            # TODO check offer listings
 
-        # handle saving the image for potential upload and other required processing
-        # handle retry saving the image as well
-        try:
-            # TODO query gemini, pricecharting
-            gemini_results = fetch_image_details_from_gemini(image_filepath)
-        except Exception as exc:
-            print(f'Failure querying gemini with exception {exc}\n, will retry later')
+    # TODO upload image to firebase ?
+    # handle saving the image for potential upload and other required processing
+    # handle retry saving the image as well
+    try:
+        if should_query_gemini:
+            if image_filepath:
+                gemini_results = fetch_image_details_from_gemini(image_filepath)
+    except Exception as exc:
+        print(f'Failure querying gemini with exception {exc}\n, will retry later')
+        # TODO add to queue to be processed later?
+        return
 
 
 
 
-def fetch_image_details_from_gemini(image_filepath_name):
+
+def fetch_image_details_from_gemini(image_filepath_name: str):
     with open(image_filepath_name, 'rb') as f:
         image_bytes = f.read()
     response = gemini.prompt_gemini_and_get_response(gemini_client, helpers.Gemini_Messages.WHAT_IS_IMG, image_bytes, CONTENT_TYPES.IMAGE)
