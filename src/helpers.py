@@ -41,6 +41,7 @@ def handle_successful_http(server_route: str, content_properties=None):
         response_code = 202
     return json.dumps(response_json), response_code
 
+# TODO make image details a class object?
 IMAGE_DETAILS_KEYS = [IMAGE_DETAILS.ITEM_NAME, IMAGE_DETAILS.PRICE_LISTED, IMAGE_DETAILS.OTHER_DETAILS]
 def parse_image_data_request(json_string: str) -> defaultdict[Any, None] | None:
     try:
