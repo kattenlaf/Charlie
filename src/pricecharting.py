@@ -35,6 +35,8 @@ STATUS = P_OFFER_STATUS = 'status' # success or error, if response obtained as e
 CONSOLE_NAME = 'console-name'
 PRODUCT_NAME = 'product-name'
 
+OFFERS = 'offers'
+
 # Some needed shortcuts for api
 PRODUCT_ENDPOINT_URL = DOMAIN_URL_API + PRODUCT_ENDPOINT
 OFFER_ENDPOINT_URL = DOMAIN_URL_API + OFFER_ENDPOINT
@@ -54,6 +56,10 @@ P_QUERY = 'q'  # product name you want to search for
 P_BUYER = 'buyer' # each buyer has a specific id, can be obtained from offer listing, not sure if will need
 P_CONSOLE = 'console' # each specific console type for games, i believe this is a code TODO check api doc to be sure
 P_SORT = 'sort' # see api documentation on line 3
+# Responses
+CONDITION_STRING = 'condition-string'
+PRICE = 'price'
+SALE_TIME = 'sale-time' # TODO factor in inflation, other potential details
 
 # /offer-details GET request
 # TODO check documentation
@@ -94,19 +100,43 @@ def check_product_exists(image_data_details, retries=0):
         return product
     return None
 
-
+MAX_OFFERS_NEEDED = 50
 # example api call - https://www.pricecharting.com/api/offers?t=c0b53bce27c1bdab90b1605249e600dc43dfd1d5&id=6910&status=sold
-def check_offer_listings(product: PriceChartingProduct):
+def check_offer_listings(product: PriceChartingProduct, image_data_details):
     url = OFFER_ENDPOINT_URL + "s"
     params = {
         P_TOKEN : DEMO_TOKEN,
         P_OFFER_STATUS : SOLD
     }
-    content = make_pricecharting_request(url,params, 0)
+    if product.product_id is not None or product.product_id != "":
+        params[P_PRODUCT_ID] = product.product_id
+    content = make_pricecharting_request(url,params)
     if content:
-        for i in range(len(content)): # should be an array of json responses
-            offer_json = json.loads(content[i])
-            # TODO follow up here, parse out needed details from offers response
+        response_json = json.loads(content)
+        offers = response_json[OFFERS]
+        condition = image_data_details['condition'] if image_data_details is not None else None
+        # TODO add key condition on front end side for user to send, or if AI will gather these details load it into the dictionary
+        valid_offers = []
+        for i in range(len(offers)):
+            offer = offers[i] # Should be a json representing the offer
+            if condition is not None:
+                # TODO verify how to match conditions further
+                if offer[CONDITION_STRING] and offer[CONDITION_STRING] == condition:
+                    valid_offers.append(offer)
+            else:
+                valid_offers.append(offer)
+            if len(valid_offers) > MAX_OFFERS_NEEDED:
+                break
+        return valid_offers
+    return None
+
+def analyze_offers(valid_offers: list[dict]):
+    """
+
+    :param valid_offers: list of all the offers returned from querying pricecharting
+    :return: some data based on the analysis of the offers
+    """
+    # TODO implement further
     return None
 
 def make_pricecharting_request(url, params, retries=0):

@@ -81,9 +81,9 @@ def upload_image():
 def process_image(image_filepath, image_data_details: defaultdict[None]):
     should_query_gemini = False
     if image_data_details:
-        pricecharting_product = pricecharting.check_product_exists(image_data_details)
-        if pricecharting_product:
-            # TODO check offer listings
+        product = pricecharting.check_product_exists(image_data_details)
+        if product:
+            pricecharting.check_offer_listings(product)
 
     # TODO upload image to firebase ?
     # handle saving the image for potential upload and other required processing
@@ -114,7 +114,7 @@ def fetch_image_details_from_gemini(image_filepath_name: str):
 def get_image_details(image_id):
     if request.method != 'GET':
         return 'incorrect http method'
-    # TODO sql command to retrieve image data
+    # TODO database command to retrieve image data
 
 def get_local_ip_address():
     s = None
