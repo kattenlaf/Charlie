@@ -133,8 +133,9 @@ def check_offer_listings(product: PriceChartingProduct, image_data_details):
 def analyze_offers(valid_offers: list[dict]):
     """
 
-    :param valid_offers: list of all the offers returned from querying pricecharting
-    :return: some data based on the analysis of the offers
+    :param valid_offers: list of all the offers returned from querying pricecharting in json response format
+    :return: some data based on the analysis of the offers, analyze data and return information based on condition of item
+            and other important details TODO Expound here
     """
     # TODO implement further
     return None

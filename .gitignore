@@ -4,3 +4,4 @@
 resources/config.yaml
 src/__pycache__/
 assets/uploaded/*
+telemetry/*
