@@ -129,7 +129,15 @@ def get_local_ip_address():
 LOCAL_PRIVATE_IP_ADDRESS = get_local_ip_address()
 LISTENING_PORT = 5000
 
+TESTING = True
+
+def test_method():
+    print('foo')
+
 if __name__ == '__main__':
     gemini_client = gemini.setup()
-    # TODO Set up certificate for security?
-    app.run(host=LOCAL_PRIVATE_IP_ADDRESS, port=LISTENING_PORT, debug=False)
+    if TESTING:
+        test_method()
+    else:
+        # TODO Set up certificate for security?
+        app.run(host=LOCAL_PRIVATE_IP_ADDRESS, port=LISTENING_PORT, debug=False)
